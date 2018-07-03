@@ -30,7 +30,7 @@ TEST_CASE("tracer") {
     auto result = buffer->traces[100].finished_spans->at(0);
     REQUIRE(result.type == "web");
     REQUIRE(result.service == "service_name");
-    REQUIRE(result.name == "/what_up");
+    REQUIRE(result.name == "request /what_up");
     REQUIRE(result.resource == "/what_up");
   }
 

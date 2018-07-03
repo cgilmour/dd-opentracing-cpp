@@ -192,7 +192,7 @@ TEST_CASE("span") {
     // Datadog special tags aren't kept, they just set the Span values.
     REQUIRE(result.meta == std::unordered_map<std::string, std::string>{
                                {"tag with no special meaning", "ayy lmao"}});
-    REQUIRE(result.name == "original span name");
+    REQUIRE(result.name == "request original span name");
     REQUIRE(result.resource == "new resource");
     REQUIRE(result.service == "new service");
     REQUIRE(result.type == "new type");
@@ -220,7 +220,7 @@ TEST_CASE("span") {
       span.FinishWithOptions(finish_options);
 
       auto& result = buffer->traces[100].finished_spans->at(0);
-      REQUIRE(result.name == "operation name");
+      REQUIRE(result.name == "request operation name");
       REQUIRE(result.resource == "operation name");
     }
 
@@ -230,7 +230,7 @@ TEST_CASE("span") {
       span.FinishWithOptions(finish_options);
 
       auto& result = buffer->traces[100].finished_spans->at(0);
-      REQUIRE(result.name == "operation name");
+      REQUIRE(result.name == "request operation name");
       REQUIRE(result.resource == "resource tag override");
     }
   }

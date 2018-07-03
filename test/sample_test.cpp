@@ -32,7 +32,7 @@ TEST_CASE("sample") {
     auto result = buffer->traces[100].finished_spans->at(0);
     REQUIRE(result.type == "web");
     REQUIRE(result.service == "service_name");
-    REQUIRE(result.name == "/should_be_kept");
+    REQUIRE(result.name == "request /should_be_kept");
     REQUIRE(result.resource == "/should_be_kept");
     // This sampler should not set the _sample_rate tag.
     REQUIRE(result.meta["_sample_rate"] == std::string());
@@ -68,7 +68,7 @@ TEST_CASE("sample") {
     auto rate_string = std::to_string(rate);
     std::for_each(buffer->traces.begin(), buffer->traces.end(), [&](auto &trace_iter) {
       auto span = trace_iter.second.finished_spans->at(0);
-      REQUIRE(span.name == "/constant_rate_sample");
+      REQUIRE(span.name == "request /constant_rate_sample");
       REQUIRE(span.meta["_sample_rate"] == rate_string);
     });
   }
