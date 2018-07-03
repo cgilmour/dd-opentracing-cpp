@@ -29,7 +29,7 @@ Span::Span(std::shared_ptr<const Tracer> tracer, std::shared_ptr<SpanBuffer<Span
       start_time_(start_time),
       service(span_service),
       type(span_type),
-      name(span_name),
+      name("request " + span_name),
       resource(resource),
       error(0),
       start(std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -80,7 +80,7 @@ void Span::FinishWithOptions(const ot::FinishSpanOptions &finish_span_options) n
 
 void Span::SetOperationName(ot::string_view operation_name) noexcept {
   std::lock_guard<std::mutex> lock_guard{mutex_};
-  name = operation_name;
+  name = "request " + operation_name;
   resource = operation_name;
 }
 
