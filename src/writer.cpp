@@ -1,9 +1,12 @@
 #include "writer.h"
+#include "encoder.h"
 #include <iostream>
 #include "version_number.h"
 
 namespace datadog {
 namespace opentracing {
+
+Writer::Writer() : encoder_(std::unique_ptr<HttpEncoder>{new AgentHttpEncoder{}}) {}
 
 namespace {
 const std::string agent_api_path = "/v0.3/traces";
