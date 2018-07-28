@@ -3,8 +3,8 @@
 
 #include <opentracing/tracer.h>
 
-#include <map>
 #include <deque>
+#include <map>
 
 namespace ot = opentracing;
 
@@ -32,19 +32,18 @@ struct TracerOptions {
   int64_t write_period_ms = 1000;
 };
 
-
 // Forward-declarations for Writer
 class SpanData;
 using Trace = std::unique_ptr<std::vector<std::unique_ptr<SpanData>>>;
 
 class HttpEncoder {
-  public:
-    HttpEncoder() {};
-    virtual ~HttpEncoder() {};
+ public:
+  HttpEncoder() {}
+  virtual ~HttpEncoder() {}
 
-    virtual std::string path() = 0;
-    virtual std::map<std::string, std::string> headers(std::deque<Trace> traces) = 0;
-    virtual std::string payload(std::deque<Trace> traces) = 0;
+  virtual std::string path() = 0;
+  virtual std::map<std::string, std::string> headers(std::deque<Trace> &traces) = 0;
+  virtual std::string payload(std::deque<Trace> &traces) = 0;
 };
 
 // A Writer is used to submit completed traces to the Datadog agent.
@@ -59,7 +58,7 @@ class Writer {
 
  protected:
   // Used to encode the completed traces for submitting to the agent.
-  const std::unique_ptr<HttpEncoder> encoder_;
+  std::unique_ptr<HttpEncoder> encoder_;
 };
 
 std::shared_ptr<ot::Tracer> makeTracer(const TracerOptions &options);

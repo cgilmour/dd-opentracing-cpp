@@ -45,8 +45,8 @@ class AgentWriter : public Writer {
   // or when flush() is called manually.
   void startWriting(std::unique_ptr<Handle> handle);
   // Posts the given Traces to the Agent. Returns true if it succeeds, otherwise false.
-  static bool postTraces(std::unique_ptr<Handle> &handle, std::stringstream &buffer,
-                         size_t num_traces);
+  static bool postTraces(std::unique_ptr<Handle> &handle,
+                         std::map<std::string, std::string> headers, std::string payload);
   // Retries the given function a finite number of times according to retry_periods_. Retries when
   // f() returns false.
   void retryFiniteOnFail(std::function<bool()> f) const;

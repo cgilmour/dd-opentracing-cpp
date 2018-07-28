@@ -1,6 +1,6 @@
 #include "writer.h"
-#include "encoder.h"
 #include <iostream>
+#include "encoder.h"
 #include "version_number.h"
 
 namespace datadog {
@@ -33,6 +33,7 @@ AgentWriter::AgentWriter(std::unique_ptr<Handle> handle, std::string tracer_vers
       write_period_(write_period),
       max_queued_traces_(max_queued_traces),
       retry_periods_(retry_periods) {
+  encoder_ = std::unique_ptr<HttpEncoder>{new AgentHttpEncoder{tracer_version}};
   setUpHandle(handle, host, port);
   startWriting(std::move(handle));
 }
@@ -87,8 +88,9 @@ void AgentWriter::startWriting(std::unique_ptr<Handle> handle) {
   // We can capture 'this' because destruction of this stops the thread and the lambda.
   worker_ = std::make_unique<std::thread>(
       [this](std::unique_ptr<Handle> handle) {
-        std::stringstream buffer;
         size_t num_traces = 0;
+        std::map<std::string, std::string> headers;
+        std::string payload;
         while (true) {
           // Encode traces when there are new ones.
           {
@@ -100,17 +102,20 @@ void AgentWriter::startWriting(std::unique_ptr<Handle> handle) {
               return;  // Stop the thread.
             }
             num_traces = traces_.size();
+            // std::cerr << "startWriting: thread: num_traces = " << num_traces << std::endl;
             if (num_traces == 0) {
               continue;
             }
-            // Clear the buffer but keep the allocated memory.
-            buffer.clear();
-            buffer.str(std::string{});
-            msgpack::pack(buffer, traces_);
-            traces_.clear();
+            headers = encoder_->headers(traces_);
+            payload = encoder_->payload(traces_);
+            // std::cerr << "startWriting: thread: headers = " << headers.size() << " payload = "
+            // << payload.size() << std::endl;
+            for (auto &h : headers) {
+              // std::cerr << h.first << ": " << h.second << std::endl;
+            }
           }  // lock on mutex_ ends.
           // Send spans, not in critical period.
-          retryFiniteOnFail([&]() { return AgentWriter::postTraces(handle, buffer, num_traces); });
+          retryFiniteOnFail([&]() { return AgentWriter::postTraces(handle, headers, payload); });
           // Let thread calling 'flush' that we're done flushing.
           {
             std::unique_lock<std::mutex> lock(mutex_);
@@ -149,19 +154,20 @@ void AgentWriter::retryFiniteOnFail(std::function<bool()> f) const {
   f();  // Final try after final sleep.
 }
 
-bool AgentWriter::postTraces(std::unique_ptr<Handle> &handle, std::stringstream &buffer,
-                             size_t num_traces) try {
-  handle->setHeaders({{"X-Datadog-Trace-Count", std::to_string(num_traces)}});
+bool AgentWriter::postTraces(std::unique_ptr<Handle> &handle,
+                             std::map<std::string, std::string> headers, std::string payload) try {
+  // std::cerr << "postTraces: headers = " << headers.size() << std::endl;
+  // std::cerr << "postTraces: payload = " << payload.size() << std::endl;
+  handle->setHeaders(headers);
 
   // We have to set the size manually, because msgpack uses null characters.
-  std::string post_fields = buffer.str();
-  CURLcode rcode = handle->setopt(CURLOPT_POSTFIELDSIZE, post_fields.size());
+  CURLcode rcode = handle->setopt(CURLOPT_POSTFIELDSIZE, payload.size());
   if (rcode != CURLE_OK) {
     std::cerr << "Error setting agent request size: " << curl_easy_strerror(rcode) << std::endl;
     return false;
   }
 
-  rcode = handle->setopt(CURLOPT_POSTFIELDS, post_fields.data());
+  rcode = handle->setopt(CURLOPT_POSTFIELDS, payload.data());
   if (rcode != CURLE_OK) {
     std::cerr << "Error setting agent request body: " << curl_easy_strerror(rcode) << std::endl;
     return false;
