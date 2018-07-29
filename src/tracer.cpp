@@ -31,6 +31,10 @@ Tracer::Tracer(TracerOptions options, std::shared_ptr<SpanBuffer> buffer, TimePr
       get_id_(get_id),
       sampler_(sampler) {}
 
+Tracer::Tracer(std::shared_ptr<Writer> writer)
+    : Tracer({}, std::shared_ptr<SpanBuffer>{new WritingSpanBuffer{writer}}, getRealTime, getId,
+             KeepAllSampler()) {}
+
 std::unique_ptr<ot::Span> Tracer::StartSpanWithOptions(ot::string_view operation_name,
                                                        const ot::StartSpanOptions &options) const
     noexcept try {

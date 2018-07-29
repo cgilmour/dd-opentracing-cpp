@@ -62,7 +62,7 @@ class Writer {
 };
 
 std::shared_ptr<ot::Tracer> makeTracer(const TracerOptions &options);
-std::shared_ptr<ot::Tracer> makeTracer(std::unique_ptr<Writer> writer);
+std::shared_ptr<ot::Tracer> makeTracer(std::shared_ptr<Writer> writer);
 
 }  // namespace opentracing
 }  // namespace datadog

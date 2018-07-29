@@ -34,6 +34,9 @@ class Tracer : public ot::Tracer, public std::enable_shared_from_this<Tracer> {
   Tracer(TracerOptions options, std::shared_ptr<SpanBuffer> buffer, TimeProvider get_time,
          IdProvider get_id, SampleProvider sample);
 
+  // Creates a Tracer that uses an external Writer implementation.
+  Tracer(std::shared_ptr<Writer> writer);
+
   Tracer() = delete;
 
   // Starts a new span.
