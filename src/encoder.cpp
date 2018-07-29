@@ -10,11 +10,9 @@ namespace opentracing {
 TraceEncoder msgpackEncoder() {
   auto buffer = std::make_shared<std::stringstream>();
   return [=](std::deque<Trace> traces) -> std::string {
-    // std::cerr << "msgpackEncoder: traces = " << traces.size() << std::endl;
     buffer->clear();
     buffer->str(std::string{});
     msgpack::pack(*buffer, traces);
-    // std::cerr << "msgpackEncoder: buffer = " << buffer->str().size() << std::endl;
     return buffer->str();
   };
 }

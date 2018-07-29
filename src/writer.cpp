@@ -102,17 +102,11 @@ void AgentWriter::startWriting(std::unique_ptr<Handle> handle) {
               return;  // Stop the thread.
             }
             num_traces = traces_.size();
-            // std::cerr << "startWriting: thread: num_traces = " << num_traces << std::endl;
             if (num_traces == 0) {
               continue;
             }
             headers = encoder_->headers(traces_);
             payload = encoder_->payload(traces_);
-            // std::cerr << "startWriting: thread: headers = " << headers.size() << " payload = "
-            // << payload.size() << std::endl;
-            for (auto &h : headers) {
-              // std::cerr << h.first << ": " << h.second << std::endl;
-            }
           }  // lock on mutex_ ends.
           // Send spans, not in critical period.
           retryFiniteOnFail([&]() { return AgentWriter::postTraces(handle, headers, payload); });
@@ -156,8 +150,6 @@ void AgentWriter::retryFiniteOnFail(std::function<bool()> f) const {
 
 bool AgentWriter::postTraces(std::unique_ptr<Handle> &handle,
                              std::map<std::string, std::string> headers, std::string payload) try {
-  // std::cerr << "postTraces: headers = " << headers.size() << std::endl;
-  // std::cerr << "postTraces: payload = " << payload.size() << std::endl;
   handle->setHeaders(headers);
 
   // We have to set the size manually, because msgpack uses null characters.
