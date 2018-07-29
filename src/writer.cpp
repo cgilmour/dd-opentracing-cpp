@@ -21,18 +21,16 @@ const long default_timeout_ms = 2000L;
 }  // namespace
 
 AgentWriter::AgentWriter(std::string host, uint32_t port, std::chrono::milliseconds write_period)
-    : AgentWriter(std::unique_ptr<Handle>{new CurlHandle{}}, config::tracer_version, write_period,
-                  max_queued_traces, default_retry_periods, host, port){};
+    : AgentWriter(std::unique_ptr<Handle>{new CurlHandle{}}, write_period, max_queued_traces,
+                  default_retry_periods, host, port){};
 
-AgentWriter::AgentWriter(std::unique_ptr<Handle> handle, std::string tracer_version,
-                         std::chrono::milliseconds write_period, size_t max_queued_traces,
+AgentWriter::AgentWriter(std::unique_ptr<Handle> handle, std::chrono::milliseconds write_period,
+                         size_t max_queued_traces,
                          std::vector<std::chrono::milliseconds> retry_periods, std::string host,
                          uint32_t port)
-    : tracer_version_(tracer_version),
-      write_period_(write_period),
+    : write_period_(write_period),
       max_queued_traces_(max_queued_traces),
       retry_periods_(retry_periods) {
-  encoder_ = std::unique_ptr<HttpEncoder>{new AgentHttpEncoder{tracer_version}};
   setUpHandle(handle, host, port);
   startWriting(std::move(handle));
 }
@@ -102,6 +100,7 @@ void AgentWriter::startWriting(std::unique_ptr<Handle> handle) {
             }
             headers = encoder_->headers(traces_);
             payload = encoder_->payload(traces_);
+            traces_.clear();
           }  // lock on mutex_ ends.
           // Send spans, not in critical period.
           retryFiniteOnFail([&]() { return AgentWriter::postTraces(handle, headers, payload); });

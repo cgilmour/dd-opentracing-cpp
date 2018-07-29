@@ -7,7 +7,7 @@ namespace datadog {
 namespace opentracing {
 
 // A function that encodes a collection of traces.
-typedef std::function<std::string(std::deque<Trace>)> TraceEncoder;
+typedef std::function<std::string(const std::deque<Trace> &)> TraceEncoder;
 
 // A HTTP Encoder that provides the methods needed to publish
 // traces to a Datadog Agent.
@@ -15,15 +15,14 @@ typedef std::function<std::string(std::deque<Trace>)> TraceEncoder;
 class AgentHttpEncoder : public HttpEncoder {
  public:
   AgentHttpEncoder();
-  AgentHttpEncoder(std::string version);
   ~AgentHttpEncoder() override {}
 
   // Returns the path that is used to submit HTTP requests to the agent.
-  std::string path() override;
+  const std::string path() override;
   // Returns the HTTP headers that are required for the collection of traces.
-  std::map<std::string, std::string> headers(std::deque<Trace> &traces) override;
+  const std::map<std::string, std::string> headers(const std::deque<Trace> &traces) override;
   // Returns the encoded payload from the collection of traces.
-  std::string payload(std::deque<Trace> &traces) override;
+  const std::string payload(const std::deque<Trace> &traces) override;
 
  private:
   // Holds the headers that are used for all HTTP requests.

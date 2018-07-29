@@ -36,14 +36,16 @@ struct TracerOptions {
 class SpanData;
 using Trace = std::unique_ptr<std::vector<std::unique_ptr<SpanData>>>;
 
+// HttpEncoder provides methods for a Writer to use when publishing
+// a collection of traces to the Datadog agent.
 class HttpEncoder {
  public:
   HttpEncoder() {}
   virtual ~HttpEncoder() {}
 
-  virtual std::string path() = 0;
-  virtual std::map<std::string, std::string> headers(std::deque<Trace> &traces) = 0;
-  virtual std::string payload(std::deque<Trace> &traces) = 0;
+  virtual const std::string path() = 0;
+  virtual const std::map<std::string, std::string> headers(const std::deque<Trace> &traces) = 0;
+  virtual const std::string payload(const std::deque<Trace> &traces) = 0;
 };
 
 // A Writer is used to submit completed traces to the Datadog agent.

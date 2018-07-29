@@ -20,10 +20,9 @@ class AgentWriter : public Writer {
   // runtime_exception.
   AgentWriter(std::string host, uint32_t port, std::chrono::milliseconds write_period);
 
-  AgentWriter(std::unique_ptr<Handle> handle, std::string tracer_version,
-              std::chrono::milliseconds write_period, size_t max_queued_traces,
-              std::vector<std::chrono::milliseconds> retry_periods, std::string host,
-              uint32_t port);
+  AgentWriter(std::unique_ptr<Handle> handle, std::chrono::milliseconds write_period,
+              size_t max_queued_traces, std::vector<std::chrono::milliseconds> retry_periods,
+              std::string host, uint32_t port);
 
   // Does not flush on destruction, buffered traces may be lost. Stops all threads.
   ~AgentWriter() override;
@@ -51,7 +50,6 @@ class AgentWriter : public Writer {
   // f() returns false.
   void retryFiniteOnFail(std::function<bool()> f) const;
 
-  const std::string tracer_version_;
   // How often to send Traces.
   const std::chrono::milliseconds write_period_;
   const size_t max_queued_traces_;
