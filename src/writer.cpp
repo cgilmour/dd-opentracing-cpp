@@ -9,7 +9,6 @@ namespace opentracing {
 Writer::Writer() : encoder_(std::unique_ptr<HttpEncoder>{new AgentHttpEncoder{}}) {}
 
 namespace {
-const std::string agent_api_path = "/v0.3/traces";
 const std::string agent_protocol = "http://";
 const size_t max_queued_traces = 7000;
 // Retry sending traces to agent a couple of times. Any more than that and the agent won't accept
@@ -42,7 +41,7 @@ void AgentWriter::setUpHandle(std::unique_ptr<Handle> &handle, std::string host,
   // Some options are the same for all actions, set them here.
   // Set the agent URI.
   std::stringstream agent_uri;
-  agent_uri << agent_protocol << host << ":" << std::to_string(port) << agent_api_path;
+  agent_uri << agent_protocol << host << ":" << std::to_string(port) << encoder_->path();
   auto rcode = handle->setopt(CURLOPT_URL, agent_uri.str().c_str());
   if (rcode != CURLE_OK) {
     throw std::runtime_error(std::string("Unable to set agent URL: ") + curl_easy_strerror(rcode));
@@ -52,10 +51,6 @@ void AgentWriter::setUpHandle(std::unique_ptr<Handle> &handle, std::string host,
     throw std::runtime_error(std::string("Unable to set agent timeout: ") +
                              curl_easy_strerror(rcode));
   }
-  // Set the common HTTP headers.
-  handle->setHeaders({{"Content-Type", "application/msgpack"},
-                      {"Datadog-Meta-Lang", "cpp"},
-                      {"Datadog-Meta-Tracer-Version", tracer_version_}});
 }  // namespace opentracing
 
 AgentWriter::~AgentWriter() { stop(); }

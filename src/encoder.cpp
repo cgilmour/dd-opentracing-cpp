@@ -7,7 +7,9 @@
 namespace datadog {
 namespace opentracing {
 
+// Returns a TraceEncoder that uses msgpack to produce the encoded data.
 TraceEncoder msgpackEncoder() {
+  // Allocate and reuse a buffer instead of making a new buffer per call.
   auto buffer = std::make_shared<std::stringstream>();
   return [=](std::deque<Trace> traces) -> std::string {
     buffer->clear();
