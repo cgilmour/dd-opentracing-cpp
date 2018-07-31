@@ -44,8 +44,11 @@ class HttpEncoder {
   virtual ~HttpEncoder() {}
 
   virtual const std::string path() = 0;
-  virtual const std::map<std::string, std::string> headers(const std::deque<Trace> &traces) = 0;
-  virtual const std::string payload(const std::deque<Trace> &traces) = 0;
+  virtual void addTrace(Trace trace) = 0;
+  virtual void clearTraces() = 0;
+  virtual uint64_t pendingTraces() = 0;
+  virtual const std::map<std::string, std::string> headers() = 0;
+  virtual const std::string payload() = 0;
 };
 
 // A Writer is used to submit completed traces to the Datadog agent.

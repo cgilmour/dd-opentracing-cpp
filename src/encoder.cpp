@@ -31,16 +31,19 @@ const std::string agent_api_path = "/v0.3/traces";
 
 const std::string AgentHttpEncoder::path() { return agent_api_path; }
 
-const std::map<std::string, std::string> AgentHttpEncoder::headers(
-    const std::deque<Trace> &traces) {
+void AgentHttpEncoder::addTrace(Trace trace) { traces_.push_back(std::move(trace)); }
+
+void AgentHttpEncoder::clearTraces() { traces_.clear(); }
+
+uint64_t AgentHttpEncoder::pendingTraces() { return traces_.size(); }
+
+const std::map<std::string, std::string> AgentHttpEncoder::headers() {
   std::map<std::string, std::string> headers(common_headers_);
-  headers["X-Datadog-Trace-Count"] = std::to_string(traces.size());
+  headers["X-Datadog-Trace-Count"] = std::to_string(traces_.size());
   return headers;
 }
 
-const std::string AgentHttpEncoder::payload(const std::deque<Trace> &traces) {
-  return trace_encoder_(traces);
-}
+const std::string AgentHttpEncoder::payload() { return trace_encoder_(traces_); }
 
 }  // namespace opentracing
 }  // namespace datadog

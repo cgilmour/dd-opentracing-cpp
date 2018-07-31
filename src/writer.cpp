@@ -70,10 +70,10 @@ void AgentWriter::write(Trace trace) {
   if (stop_writing_) {
     return;
   }
-  if (traces_.size() >= max_queued_traces_) {
+  if (encoder_->pendingTraces() >= max_queued_traces_) {
     return;
   }
-  traces_.push_back(std::move(trace));
+  encoder_->addTrace(std::move(trace));
 };
 
 void AgentWriter::startWriting(std::unique_ptr<Handle> handle) {
@@ -94,13 +94,13 @@ void AgentWriter::startWriting(std::unique_ptr<Handle> handle) {
             if (stop_writing_) {
               return;  // Stop the thread.
             }
-            num_traces = traces_.size();
+            num_traces = encoder_->pendingTraces();
             if (num_traces == 0) {
               continue;
             }
-            headers = encoder_->headers(traces_);
-            payload = encoder_->payload(traces_);
-            traces_.clear();
+            headers = encoder_->headers();
+            payload = encoder_->payload();
+            encoder_->clearTraces();
           }  // lock on mutex_ ends.
           // Send spans, not in critical period.
           retryFiniteOnFail([&]() { return AgentWriter::postTraces(handle, headers, payload); });

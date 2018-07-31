@@ -70,8 +70,6 @@ class AgentWriter : public Writer {
   bool stop_writing_ = false;
   // If set to true, flushes worker (which sets it false again). Locked by mutex_;
   bool flush_worker_ = false;
-  // Multiple producer (potentially), single consumer. Locked by mutex_.
-  std::deque<Trace> traces_;
 };
 
 }  // namespace opentracing

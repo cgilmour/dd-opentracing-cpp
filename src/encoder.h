@@ -19,14 +19,18 @@ class AgentHttpEncoder : public HttpEncoder {
 
   // Returns the path that is used to submit HTTP requests to the agent.
   const std::string path() override;
+  void addTrace(Trace trace) override;
+  void clearTraces() override;
+  uint64_t pendingTraces() override;
   // Returns the HTTP headers that are required for the collection of traces.
-  const std::map<std::string, std::string> headers(const std::deque<Trace> &traces) override;
+  const std::map<std::string, std::string> headers() override;
   // Returns the encoded payload from the collection of traces.
-  const std::string payload(const std::deque<Trace> &traces) override;
+  const std::string payload() override;
 
  private:
   // Holds the headers that are used for all HTTP requests.
   std::map<std::string, std::string> common_headers_;
+  std::deque<Trace> traces_;
   // The function that performs the encoding of the payload.
   TraceEncoder trace_encoder_;
 };
