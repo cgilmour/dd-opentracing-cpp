@@ -31,9 +31,14 @@ Tracer::Tracer(TracerOptions options, std::shared_ptr<SpanBuffer> buffer, TimePr
       get_id_(get_id),
       sampler_(sampler) {}
 
-Tracer::Tracer(std::shared_ptr<Writer> writer)
-    : Tracer({}, std::shared_ptr<SpanBuffer>{new WritingSpanBuffer{writer}}, getRealTime, getId,
-             KeepAllSampler()) {}
+Tracer::Tracer(std::shared_ptr<TracePublisher> &publisher)
+    : get_time_(getRealTime), get_id_(getId), sampler_(KeepAllSampler()) {
+  auto writer = std::make_shared<ExternalWriter>();
+  std::cerr << writer->publisher() << std::endl;
+  publisher = writer->publisher();
+  std::cerr << publisher << std::endl;
+  buffer_ = std::shared_ptr<SpanBuffer>{new WritingSpanBuffer{writer}};
+}
 
 std::unique_ptr<ot::Span> Tracer::StartSpanWithOptions(ot::string_view operation_name,
                                                        const ot::StartSpanOptions &options) const

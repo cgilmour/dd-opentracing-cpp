@@ -11,8 +11,9 @@ TEST_CASE("tracer") {
     REQUIRE(tracer);
   }
   SECTION("can be created with external Writer implementation") {
-    auto writer = std::make_shared<MockWriter>();
-    auto tracer = makeTracer(writer);
+    std::shared_ptr<TracePublisher> publisher;
+    auto tracer = makeTracer(publisher);
     REQUIRE(tracer);
+    REQUIRE(publisher);
   }
 }

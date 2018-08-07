@@ -7,11 +7,29 @@
 #include <mutex>
 #include <sstream>
 #include <thread>
+#include "publisher.h"
 #include "span.h"
 #include "transport.h"
 
 namespace datadog {
 namespace opentracing {
+
+class SpanData;
+using Trace = std::unique_ptr<std::vector<std::unique_ptr<SpanData>>>;
+
+// A Writer is used to submit completed traces to the Datadog agent.
+class Writer {
+ public:
+  Writer();
+
+  virtual ~Writer() {}
+
+  // Writes the given Trace.
+  virtual void write(Trace trace) = 0;
+
+ protected:
+  std::shared_ptr<AgentHttpPublisher> trace_publisher_;
+};
 
 // A Writer that sends Traces (collections of Spans) to a Datadog agent.
 class AgentWriter : public Writer {
@@ -70,6 +88,19 @@ class AgentWriter : public Writer {
   bool stop_writing_ = false;
   // If set to true, flushes worker (which sets it false again). Locked by mutex_;
   bool flush_worker_ = false;
+};
+
+// A writer that collects trace data but uses an external mechanism to transmit the data
+// to the Datadog Agent.
+class ExternalWriter : public Writer {
+ public:
+  ExternalWriter() {}
+  ~ExternalWriter() {}
+
+  // Implements Writer methods.
+  void write(Trace trace) override;
+
+  std::shared_ptr<TracePublisher> publisher() { return trace_publisher_; }
 };
 
 }  // namespace opentracing

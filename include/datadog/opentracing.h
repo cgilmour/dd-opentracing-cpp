@@ -32,42 +32,23 @@ struct TracerOptions {
   int64_t write_period_ms = 1000;
 };
 
-// Forward-declarations for Writer
-class SpanData;
-using Trace = std::unique_ptr<std::vector<std::unique_ptr<SpanData>>>;
-
-// HttpEncoder provides methods for a Writer to use when publishing
-// a collection of traces to the Datadog agent.
-class HttpEncoder {
+// TracePublisher exposes the data required to publish traces to the
+// Datadog Agent.
+class TracePublisher {
  public:
-  HttpEncoder() {}
-  virtual ~HttpEncoder() {}
+  TracePublisher() {}
+  virtual ~TracePublisher() {}
 
+  // Returns the Datadog Agent endpoint that traces should be published to.
   virtual const std::string path() = 0;
-  virtual void addTrace(Trace trace) = 0;
+  virtual std::size_t pendingTraces() = 0;
   virtual void clearTraces() = 0;
-  virtual uint64_t pendingTraces() = 0;
   virtual const std::map<std::string, std::string> headers() = 0;
   virtual const std::string payload() = 0;
 };
 
-// A Writer is used to submit completed traces to the Datadog agent.
-class Writer {
- public:
-  Writer();
-
-  virtual ~Writer() {}
-
-  // Writes the given Trace.
-  virtual void write(Trace trace) = 0;
-
- protected:
-  // Used to encode the completed traces for submitting to the agent.
-  std::unique_ptr<HttpEncoder> encoder_;
-};
-
 std::shared_ptr<ot::Tracer> makeTracer(const TracerOptions &options);
-std::shared_ptr<ot::Tracer> makeTracer(std::shared_ptr<Writer> writer);
+std::shared_ptr<ot::Tracer> makeTracer(std::shared_ptr<TracePublisher> &publisher);
 
 }  // namespace opentracing
 }  // namespace datadog

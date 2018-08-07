@@ -10,8 +10,8 @@ std::shared_ptr<ot::Tracer> makeTracer(const TracerOptions &options) {
   return std::shared_ptr<ot::Tracer>{new Tracer{options}};
 }
 
-std::shared_ptr<ot::Tracer> makeTracer(std::shared_ptr<Writer> writer) {
-  return std::shared_ptr<ot::Tracer>{new Tracer{writer}};
+std::shared_ptr<ot::Tracer> makeTracer(std::shared_ptr<TracePublisher> &publisher) {
+  return std::shared_ptr<ot::Tracer>{new Tracer{publisher}};
 }
 
 }  // namespace opentracing

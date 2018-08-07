@@ -1,12 +1,12 @@
 #include "writer.h"
 #include <iostream>
-#include "encoder.h"
+#include "publisher.h"
 #include "version_number.h"
 
 namespace datadog {
 namespace opentracing {
 
-Writer::Writer() : encoder_(std::unique_ptr<HttpEncoder>{new AgentHttpEncoder{}}) {}
+Writer::Writer() : trace_publisher_(std::make_shared<AgentHttpPublisher>()) {}
 
 namespace {
 const std::string agent_protocol = "http://";
@@ -39,7 +39,7 @@ void AgentWriter::setUpHandle(std::unique_ptr<Handle> &handle, std::string host,
   // Some options are the same for all actions, set them here.
   // Set the agent URI.
   std::stringstream agent_uri;
-  agent_uri << agent_protocol << host << ":" << std::to_string(port) << encoder_->path();
+  agent_uri << agent_protocol << host << ":" << std::to_string(port) << trace_publisher_->path();
   auto rcode = handle->setopt(CURLOPT_URL, agent_uri.str().c_str());
   if (rcode != CURLE_OK) {
     throw std::runtime_error(std::string("Unable to set agent URL: ") + curl_easy_strerror(rcode));
@@ -70,10 +70,10 @@ void AgentWriter::write(Trace trace) {
   if (stop_writing_) {
     return;
   }
-  if (encoder_->pendingTraces() >= max_queued_traces_) {
+  if (trace_publisher_->pendingTraces() >= max_queued_traces_) {
     return;
   }
-  encoder_->addTrace(std::move(trace));
+  trace_publisher_->addTrace(std::move(trace));
 };
 
 void AgentWriter::startWriting(std::unique_ptr<Handle> handle) {
@@ -94,13 +94,13 @@ void AgentWriter::startWriting(std::unique_ptr<Handle> handle) {
             if (stop_writing_) {
               return;  // Stop the thread.
             }
-            num_traces = encoder_->pendingTraces();
+            num_traces = trace_publisher_->pendingTraces();
             if (num_traces == 0) {
               continue;
             }
-            headers = encoder_->headers();
-            payload = encoder_->payload();
-            encoder_->clearTraces();
+            headers = trace_publisher_->headers();
+            payload = trace_publisher_->payload();
+            trace_publisher_->clearTraces();
           }  // lock on mutex_ ends.
           // Send spans, not in critical period.
           retryFiniteOnFail([&]() { return AgentWriter::postTraces(handle, headers, payload); });
@@ -170,6 +170,8 @@ bool AgentWriter::postTraces(std::unique_ptr<Handle> &handle,
   // Drop spans, but live to fight another day.
   return true;  // Don't attempt to retry.
 }
+
+void ExternalWriter::write(Trace trace) { trace_publisher_->addTrace(std::move(trace)); }
 
 }  // namespace opentracing
 }  // namespace datadog
